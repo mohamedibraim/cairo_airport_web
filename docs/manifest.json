@@ -1,0 +1,13 @@
+{
+  "name": "Cairo Airport Digital Twin — Web Command Center",
+  "short_name": "Cairo Twin",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#F8FBFC",
+  "theme_color": "#0B3441",
+  "description": "Frontend-only Flight Web Command Center for Cairo Airport Digital Twin.",
+  "icons": [
+    { "src": "icons/Icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/Icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
