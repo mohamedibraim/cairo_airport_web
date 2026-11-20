@@ -1,26 +1,27 @@
 import 'package:flutter/material.dart';
 import '../l10n/strings.dart';
 import '../theme/tokens.dart';
+import 'badges.dart';
 
-/// Scrollable page container with consistent padding and max width.
+/// Scrollable page container with breakpoint-aware padding and a 1560px cap.
 class PageBody extends StatelessWidget {
   final List<Widget> children;
   final double spacing;
   const PageBody({
     super.key,
     required this.children,
-    this.spacing = AppSpace.lg,
+    this.spacing = AppSpace.sectionGap,
   });
 
   @override
   Widget build(BuildContext context) {
     final w = MediaQuery.sizeOf(context).width;
-    final pad = w < 640 ? AppSpace.md : AppSpace.xl;
+    final pad = AppSpace.pagePadding(w);
     return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(pad, pad, pad, AppSpace.xxl),
+      padding: EdgeInsets.fromLTRB(pad, pad, pad, AppSpace.space10),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1560),
+          constraints: const BoxConstraints(maxWidth: AppSpace.maxPageWidth),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -36,7 +37,8 @@ class PageBody extends StatelessWidget {
   }
 }
 
-/// Page heading with description and actions.
+/// Page heading with description and actions. The page title lives here only;
+/// the shell deliberately shows a quiet breadcrumb instead of repeating it.
 class PageIntro extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -52,28 +54,33 @@ class PageIntro extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).textTheme;
     return LayoutBuilder(
       builder: (context, c) {
-        final narrow = c.maxWidth < 720;
+        final narrow = c.maxWidth < AppBreakpoints.smallDesktop;
         final heading = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (eyebrow != null) ...[
               Text(
-                eyebrow!.toUpperCase(),
-                style: t.labelSmall?.copyWith(
-                  color: AppColors.action,
-                  letterSpacing: 0.8,
+                eyebrow!,
+                style: AppTypography.label.copyWith(
+                  color: AppColors.primaryStrong,
                 ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: AppSpace.space2),
             ],
-            Text(title, style: t.displaySmall),
-            const SizedBox(height: 4),
+            Text(
+              title,
+              style: AppTypography.pageTitle.copyWith(
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: AppSpace.space2),
             Text(
               subtitle,
-              style: t.bodyMedium?.copyWith(color: AppColors.muted),
+              style: AppTypography.bodyPrimary.copyWith(
+                color: AppColors.textSecondary,
+              ),
             ),
           ],
         );
@@ -82,10 +89,10 @@ class PageIntro extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               heading,
-              const SizedBox(height: AppSpace.md),
+              const SizedBox(height: AppSpace.space4),
               Wrap(
-                spacing: AppSpace.sm,
-                runSpacing: AppSpace.sm,
+                spacing: AppSpace.space2,
+                runSpacing: AppSpace.space2,
                 children: actions,
               ),
             ],
@@ -96,10 +103,10 @@ class PageIntro extends StatelessWidget {
           children: [
             Expanded(child: heading),
             if (actions.isNotEmpty) ...[
-              const SizedBox(width: AppSpace.lg),
+              const SizedBox(width: AppSpace.space6),
               Wrap(
-                spacing: AppSpace.sm,
-                runSpacing: AppSpace.sm,
+                spacing: AppSpace.space2,
+                runSpacing: AppSpace.space2,
                 alignment: WrapAlignment.end,
                 children: actions,
               ),
@@ -111,8 +118,7 @@ class PageIntro extends StatelessWidget {
   }
 }
 
-/// A soft inline message used for caveats, stale data, conflicts and scope
-/// notes. Never used for decoration.
+/// A functional inline message for caveats, stale data and scope notes.
 class InfoBanner extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -130,31 +136,38 @@ class InfoBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).textTheme;
+    final tone = AppTones.from(color);
     return Container(
-      padding: const EdgeInsets.all(AppSpace.md),
+      padding: const EdgeInsets.all(AppSpace.space4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.07),
-        borderRadius: BorderRadius.circular(AppRadius.nested),
-        border: Border.all(color: color.withValues(alpha: 0.25)),
+        color: tone.background,
+        borderRadius: BorderRadius.circular(AppRadius.control),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 18, color: color),
-          const SizedBox(width: AppSpace.sm),
+          Icon(icon, size: 18, color: tone.text),
+          const SizedBox(width: AppSpace.space3),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: t.titleSmall?.copyWith(color: color)),
-                const SizedBox(height: 2),
-                Text(message, style: t.bodySmall?.copyWith(height: 1.5)),
+                Text(
+                  title,
+                  style: AppTypography.bodyEmphasis.copyWith(color: tone.text),
+                ),
+                const SizedBox(height: AppSpace.space1),
+                Text(
+                  message,
+                  style: AppTypography.metadata.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
               ],
             ),
           ),
           if (trailing != null) ...[
-            const SizedBox(width: AppSpace.sm),
+            const SizedBox(width: AppSpace.space3),
             trailing!,
           ],
         ],
@@ -163,8 +176,8 @@ class InfoBanner extends StatelessWidget {
   }
 }
 
-/// Responsive card grid. Columns drop automatically for tablet and mobile
-/// browser widths instead of relying on horizontal scrolling.
+/// Responsive card grid. Columns drop at the approved breakpoints instead of
+/// relying on horizontal page scrolling.
 class ResponsiveGrid extends StatelessWidget {
   final List<Widget> children;
   final int desktop;
@@ -177,16 +190,16 @@ class ResponsiveGrid extends StatelessWidget {
     this.desktop = 4,
     this.tablet = 2,
     this.mobile = 1,
-    this.spacing = AppSpace.md,
+    this.spacing = AppSpace.cardGap,
   });
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, c) {
-        final cols = c.maxWidth >= 1180
+        final cols = c.maxWidth >= AppBreakpoints.smallDesktop
             ? desktop
-            : (c.maxWidth >= 680 ? tablet : mobile);
+            : (c.maxWidth >= AppBreakpoints.mobile ? tablet : mobile);
         final width = (c.maxWidth - spacing * (cols - 1)) / cols;
         return Wrap(
           spacing: spacing,
@@ -211,9 +224,9 @@ class SplitPane extends StatelessWidget {
     super.key,
     required this.main,
     required this.side,
-    this.sideWidth = 360,
-    this.breakpoint = 980,
-    this.gap = AppSpace.lg,
+    this.sideWidth = 380,
+    this.breakpoint = AppBreakpoints.tablet,
+    this.gap = AppSpace.cardGap,
   });
 
   @override
@@ -223,11 +236,7 @@ class SplitPane extends StatelessWidget {
         if (c.maxWidth < breakpoint) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              main,
-              SizedBox(height: gap),
-              side,
-            ],
+            children: [main, SizedBox(height: gap), side],
           );
         }
         return Row(
@@ -267,33 +276,35 @@ class ChoiceChips<T> extends StatelessWidget {
           selected: o.$1 == selected,
           onSelected: (_) => onChanged(o.$1),
           showCheckmark: false,
-          selectedColor: AppColors.action,
+          selectedColor: AppColors.surfaceSelected,
           backgroundColor: AppColors.surface,
           side: BorderSide(
-            color: o.$1 == selected ? AppColors.action : AppColors.border,
+            color: o.$1 == selected ? AppColors.primaryBorder : AppColors.border,
           ),
-          labelStyle: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            color: o.$1 == selected ? Colors.white : AppColors.text,
+          labelStyle: AppTypography.label.copyWith(
+            color: o.$1 == selected
+                ? AppColors.primaryStrong
+                : AppColors.textSecondary,
+            fontWeight: FontWeight.w600,
           ),
           visualDensity: VisualDensity.compact,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
     ];
     final content = Wrap(
-      spacing: AppSpace.sm,
-      runSpacing: AppSpace.sm,
+      spacing: AppSpace.space2,
+      runSpacing: AppSpace.space2,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         if (label != null)
           Padding(
-            padding: const EdgeInsetsDirectional.only(end: 4),
+            padding: const EdgeInsetsDirectional.only(
+              end: AppSpace.metadataGap,
+            ),
             child: Text(
               label!,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: AppColors.muted,
+              style: AppTypography.label.copyWith(
+                color: AppColors.textSecondary,
               ),
             ),
           ),
@@ -301,10 +312,7 @@ class ChoiceChips<T> extends StatelessWidget {
       ],
     );
     if (!scrollable) return content;
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: content,
-    );
+    return SingleChildScrollView(scrollDirection: Axis.horizontal, child: content);
   }
 }
 
@@ -317,7 +325,7 @@ class SearchField extends StatefulWidget {
     super.key,
     required this.hint,
     required this.onChanged,
-    this.width = 260,
+    this.width = 320,
     this.initial = '',
   });
 
@@ -338,35 +346,49 @@ class _SearchFieldState extends State<SearchField> {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: widget.width,
-      child: TextField(
-        controller: _controller,
-        onChanged: widget.onChanged,
-        style: const TextStyle(fontSize: 12),
-        decoration: InputDecoration(
-          hintText: widget.hint,
-          isDense: true,
-          prefixIcon: const Icon(
-            Icons.search,
-            size: 17,
-            color: AppColors.muted,
+    final mediaWidth = MediaQuery.sizeOf(context).width;
+    return LayoutBuilder(
+      builder: (context, c) {
+        final available = c.maxWidth.isFinite ? c.maxWidth : widget.width;
+        final width = mediaWidth < AppBreakpoints.mobile
+            ? available
+            : (widget.width > available ? available : widget.width);
+        return SizedBox(
+          width: width,
+          child: TextField(
+            controller: _controller,
+            onChanged: (value) {
+              setState(() {});
+              widget.onChanged(value);
+            },
+            style: AppTypography.tableText,
+            decoration: InputDecoration(
+              hintText: widget.hint,
+              isDense: false,
+              prefixIcon: const Icon(
+                Icons.search,
+                size: 18,
+                color: AppColors.textTertiary,
+              ),
+              prefixIconConstraints: const BoxConstraints(
+                minWidth: 40,
+                minHeight: 44,
+              ),
+              suffixIcon: _controller.text.isEmpty
+                  ? null
+                  : IconButton(
+                      tooltip: 'Clear',
+                      icon: const Icon(Icons.close, size: 18),
+                      onPressed: () {
+                        _controller.clear();
+                        setState(() {});
+                        widget.onChanged('');
+                      },
+                    ),
+            ),
           ),
-          prefixIconConstraints: const BoxConstraints(
-            minWidth: 36,
-            minHeight: 32,
-          ),
-          suffixIcon: _controller.text.isEmpty
-              ? null
-              : IconButton(
-                  icon: const Icon(Icons.close, size: 15),
-                  onPressed: () {
-                    _controller.clear();
-                    widget.onChanged('');
-                  },
-                ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -388,7 +410,6 @@ class MiniStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).textTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -397,32 +418,44 @@ class MiniStat extends StatelessWidget {
           label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: t.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+          style: AppTypography.metadata.copyWith(
+            color: AppColors.textSecondary,
+          ),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: AppSpace.space1),
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text(
+            LtrText(
               value,
-              style: t.titleLarge?.copyWith(color: color ?? AppColors.navy),
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.cardTitle.copyWith(
+                color: color ?? AppColors.textPrimary,
+              ),
             ),
             if (unit != null) ...[
-              const SizedBox(width: 4),
+              const SizedBox(width: AppSpace.metadataGap),
               Padding(
-                padding: const EdgeInsets.only(bottom: 2),
-                child: Text(unit!, style: t.bodySmall),
+                padding: const EdgeInsets.only(bottom: 1),
+                child: Text(
+                  unit!,
+                  style: AppTypography.metadata.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
               ),
             ],
           ],
         ),
         if (hint != null) ...[
-          const SizedBox(height: 1),
+          const SizedBox(height: AppSpace.space1),
           Text(
             hint!,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: t.labelSmall?.copyWith(color: AppColors.muted),
+            style: AppTypography.metadata.copyWith(
+              color: AppColors.textTertiary,
+            ),
           ),
         ],
       ],
@@ -438,15 +471,20 @@ class DetailRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
+      padding: const EdgeInsets.symmetric(vertical: AppSpace.space2),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
             width: 118,
-            child: Text(label, style: Theme.of(context).textTheme.bodySmall),
+            child: Text(
+              label,
+              style: AppTypography.metadata.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpace.space3),
           Expanded(child: value),
         ],
       ),
@@ -461,14 +499,11 @@ class DetailValue extends StatelessWidget {
   const DetailValue(this.text, {super.key, this.ltr = false, this.color});
   @override
   Widget build(BuildContext context) {
-    final style = Theme.of(
-      context,
-    ).textTheme.labelMedium?.copyWith(color: color ?? AppColors.text);
-    if (!ltr) return Text(text, style: style);
-    return Directionality(
-      textDirection: TextDirection.ltr,
-      child: Text(text, style: style, textAlign: TextAlign.start),
+    final style = AppTypography.tableText.copyWith(
+      color: color ?? AppColors.textPrimary,
     );
+    if (!ltr) return Text(text, style: style);
+    return LtrText(text, style: style);
   }
 }
 
@@ -482,15 +517,13 @@ class CardNote extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 13, color: AppColors.muted),
-        const SizedBox(width: 6),
+        Icon(icon, size: 14, color: AppColors.textTertiary),
+        const SizedBox(width: AppSpace.space2),
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(
-              fontSize: 10,
-              color: AppColors.muted,
-              height: 1.4,
+            style: AppTypography.metadata.copyWith(
+              color: AppColors.textTertiary,
             ),
           ),
         ),
@@ -507,15 +540,10 @@ class Mono extends StatelessWidget {
   const Mono(this.text, {super.key, this.style, this.align});
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.ltr,
-      child: Text(
-        text,
-        textAlign: align ?? TextAlign.start,
-        style: (style ?? const TextStyle()).copyWith(
-          fontFeatures: const [FontFeature.tabularFigures()],
-        ),
-      ),
+    return LtrText(
+      text,
+      textAlign: align,
+      style: (style ?? AppTypography.metadata).merge(AppTypography.numeric),
     );
   }
 }

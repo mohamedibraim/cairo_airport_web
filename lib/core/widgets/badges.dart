@@ -4,6 +4,8 @@ import '../domain/models.dart';
 import '../l10n/strings.dart';
 import '../theme/tokens.dart';
 
+/// A 24px semantic status pill. The incoming [color] is mapped to the approved
+/// soft palette so status is expressed by text + colour, never by colour alone.
 class StatusPill extends StatelessWidget {
   final String label;
   final Color color;
@@ -21,39 +23,37 @@ class StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = background ?? color.withValues(alpha: 0.12);
+    final tone = AppTones.from(color);
     return Container(
+      height: 24,
       padding: EdgeInsets.symmetric(
-        horizontal: compact ? 8 : 10,
-        vertical: compact ? 3 : 5,
+        horizontal: compact ? AppSpace.space2 : 9,
       ),
       decoration: BoxDecoration(
-        color: bg,
+        color: background ?? tone.background,
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: compact ? 11 : 13, color: color),
-            const SizedBox(width: 4),
+            Icon(icon, size: 13, color: tone.text),
+            const SizedBox(width: AppSpace.metadataGap),
           ] else ...[
             Container(
-              width: compact ? 6 : 7,
-              height: compact ? 6 : 7,
-              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(color: tone.text, shape: BoxShape.circle),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: AppSpace.metadataGap),
           ],
           Flexible(
             child: Text(
               label,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: color,
-                fontSize: compact ? 10 : 11,
-                fontWeight: FontWeight.w700,
+              style: AppTypography.label.copyWith(
+                color: tone.text,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -63,6 +63,33 @@ class StatusPill extends StatelessWidget {
   }
 }
 
+class _MetadataDot extends StatelessWidget {
+  final String label;
+  final AppSemanticTone tone;
+  const _MetadataDot({required this.label, required this.tone});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 6,
+          height: 6,
+          decoration: BoxDecoration(color: tone.text, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: AppSpace.metadataGap),
+        Text(
+          label,
+          style: AppTypography.metadata.copyWith(color: tone.text),
+        ),
+      ],
+    );
+  }
+}
+
+/// Compact provenance line: mode · freshness · as-of · optional stream.
+/// Rendered as metadata text instead of stacked badges to avoid visual noise.
 class SourceBadge extends StatelessWidget {
   final SourceMeta meta;
   final AppStrings s;
@@ -87,24 +114,22 @@ class SourceBadge extends StatelessWidget {
     final time = _fmt(meta.observedAt);
     final asOf = s.tr('as of', 'اعتبارًا من');
     return Wrap(
-      spacing: 6,
-      runSpacing: 4,
+      spacing: AppSpace.space3,
+      runSpacing: AppSpace.space1,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        StatusPill(label: mode, color: meta.mode.color, compact: true),
-        StatusPill(label: fresh, color: meta.freshness.color, compact: true),
+        _MetadataDot(label: mode, tone: AppTones.from(meta.mode.color)),
+        _MetadataDot(label: fresh, tone: AppTones.from(meta.freshness.color)),
         LtrText(
           '$asOf $time',
-          style: const TextStyle(
-            fontSize: 10,
-            color: AppColors.muted,
-            fontWeight: FontWeight.w600,
-          ),
+          style: AppTypography.metadata.copyWith(color: AppColors.textTertiary),
         ),
         if (showStream)
           LtrText(
             meta.streamId,
-            style: const TextStyle(fontSize: 10, color: AppColors.muted),
+            style: AppTypography.metadata.copyWith(
+              color: AppColors.textTertiary,
+            ),
           ),
       ],
     );
@@ -141,8 +166,8 @@ class CaseStatusBadge extends StatelessWidget {
       StatusPill(label: status.label(s), color: status.color, compact: true);
 }
 
-/// Forces LTR rendering for IDs, flight numbers, codes and times, as required
-/// by the blueprint for Arabic contexts.
+/// Forces LTR rendering and Inter tabular figures for IDs, flight numbers,
+/// codes and times inside both Arabic and English layouts.
 class LtrText extends StatelessWidget {
   final String text;
   final TextStyle? style;
@@ -164,7 +189,10 @@ class LtrText extends StatelessWidget {
       textDirection: TextDirection.ltr,
       child: Text(
         text,
-        style: style,
+        style: (style ?? const TextStyle()).copyWith(
+          fontFamily: 'Inter',
+          fontFeatures: const [FontFeature.tabularFigures()],
+        ),
         maxLines: maxLines,
         overflow: overflow,
         textAlign: textAlign ?? TextAlign.start,
@@ -181,9 +209,8 @@ class IdText extends StatelessWidget {
   Widget build(BuildContext context) {
     return LtrText(
       id,
-      style: (style ?? const TextStyle()).copyWith(
-        fontFeatures: const [FontFeature.tabularFigures()],
-        fontWeight: FontWeight.w700,
+      style: (style ?? AppTypography.metadata).copyWith(
+        fontWeight: FontWeight.w600,
       ),
     );
   }

@@ -19,16 +19,20 @@ class AppShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final s = ref.watch(stringsProvider);
-    final wide = MediaQuery.sizeOf(context).width >= 1080;
+    final width = MediaQuery.sizeOf(context).width;
+    final showSidebar = width >= AppBreakpoints.tablet;
+    final compact = width >= AppBreakpoints.tablet &&
+        width < AppBreakpoints.smallDesktop;
+    final drawerWidth = width > 360 ? 320.0 : width * 0.86;
 
     return Scaffold(
-      backgroundColor: AppColors.page,
-      drawerScrimColor: AppColors.navy.withValues(alpha: 0.35),
-      drawer: wide
+      backgroundColor: AppColors.canvas,
+      drawerScrimColor: AppColors.sidebar.withValues(alpha: 0.45),
+      drawer: showSidebar
           ? null
           : Drawer(
-              width: 276,
-              backgroundColor: AppColors.sidebarTop,
+              width: drawerWidth,
+              backgroundColor: AppColors.sidebar,
               shape: const RoundedRectangleBorder(),
               child: SafeArea(
                 child: Sidebar(
@@ -45,12 +49,13 @@ class AppShell extends ConsumerWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (wide)
+            if (showSidebar)
               SizedBox(
-                width: 252,
+                width: compact ? 72 : 256,
                 child: Sidebar(
                   currentPath: currentPath,
                   s: s,
+                  compact: compact,
                   onNavigate: (path) {
                     if (path != currentPath) context.go(path);
                   },
@@ -59,7 +64,7 @@ class AppShell extends ConsumerWidget {
             Expanded(
               child: Column(
                 children: [
-                  TopBar(currentPath: currentPath, s: s, showMenu: !wide),
+                  TopBar(currentPath: currentPath, s: s, showMenu: !showSidebar),
                   Expanded(child: child),
                 ],
               ),
@@ -74,12 +79,14 @@ class AppShell extends ConsumerWidget {
 class Sidebar extends ConsumerWidget {
   final String currentPath;
   final AppStrings s;
+  final bool compact;
   final ValueChanged<String> onNavigate;
   const Sidebar({
     super.key,
     required this.currentPath,
     required this.s,
     required this.onNavigate,
+    this.compact = false,
   });
 
   @override
@@ -116,149 +123,137 @@ class Sidebar extends ConsumerWidget {
     }
 
     return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [AppColors.sidebarTop, AppColors.sidebarBottom],
-        ),
-      ),
+      color: AppColors.sidebar,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpace.lg,
-              AppSpace.lg,
-              AppSpace.lg,
-              AppSpace.md,
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.16),
-                    borderRadius: BorderRadius.circular(AppRadius.control),
-                    border: Border.all(
-                      color: AppColors.primary.withValues(alpha: 0.35),
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.flight_takeoff,
-                    color: AppColors.primary,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: AppSpace.sm),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        s.tr('Operations Center', 'مركز العمليات'),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 1),
-                      Text(
-                        s.tr(
-                          'Cairo International Airport',
-                          'مطار القاهرة الدولي',
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppColors.onSidebarMuted,
-                          fontSize: 9.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpace.sm,
-                vertical: 5,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.info.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(AppRadius.chip),
-                border: Border.all(
-                  color: AppColors.info.withValues(alpha: 0.3),
-                ),
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 76),
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: compact ? AppSpace.space3 : AppSpace.space4,
+                vertical: AppSpace.space4,
               ),
               child: Row(
                 children: [
                   Container(
-                    width: 6,
-                    height: 6,
-                    decoration: const BoxDecoration(
-                      color: AppColors.info,
-                      shape: BoxShape.circle,
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(AppRadius.control),
+                    ),
+                    child: const Icon(
+                      Icons.flight_takeoff,
+                      color: AppColors.primary,
+                      size: 19,
                     ),
                   ),
-                  const SizedBox(width: 5),
-                  Expanded(
-                    child: Text(
-                      s.tr(
-                        'Demo mode · simulated data',
-                        'وضع تجريبي · بيانات محاكاة',
-                      ),
-                      style: const TextStyle(
-                        color: AppColors.onSidebar,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w600,
+                  if (!compact) ...[
+                    const SizedBox(width: AppSpace.space3),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            s.tr('Operations Center', 'مركز العمليات'),
+                            style: AppTypography.bodyEmphasis.copyWith(
+                              color: AppColors.sidebarText,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpace.space1),
+                          Text(
+                            s.tr(
+                              'Cairo International Airport',
+                              'مطار القاهرة الدولي',
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.metadata.copyWith(
+                              color: AppColors.sidebarMuted,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
           ),
-          const SizedBox(height: AppSpace.md),
+          if (!compact)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpace.space4),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpace.space3,
+                  vertical: AppSpace.space2,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.sidebarSelected,
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpace.space2),
+                    Expanded(
+                      child: Text(
+                        s.tr(
+                          'Demo mode · fixture data',
+                          'وضع تجريبي · بيانات ثابتة',
+                        ),
+                        style: AppTypography.metadata.copyWith(
+                          color: AppColors.sidebarMuted,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          const SizedBox(height: AppSpace.space4),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpace.sm,
-                0,
-                AppSpace.sm,
-                AppSpace.md,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpace.space2,
+                vertical: AppSpace.space1,
               ),
               children: [
                 for (final group in NavGroup.values) ...[
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpace.md,
-                      AppSpace.md,
-                      AppSpace.md,
-                      6,
-                    ),
-                    child: Text(
-                      groupLabel(group, s),
-                      style: const TextStyle(
-                        color: AppColors.onSidebarMuted,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.9,
+                  if (!compact)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpace.space3,
+                        AppSpace.space6,
+                        AppSpace.space3,
+                        AppSpace.space2,
                       ),
-                    ),
-                  ),
+                      child: Text(
+                        groupLabel(group, s),
+                        style: AppTypography.label.copyWith(
+                          color: AppColors.sidebarMuted,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    )
+                  else
+                    const SizedBox(height: AppSpace.space4),
                   for (final d in Routes.destinations.where(
                     (d) => d.group == group,
                   ))
                     _SidebarItem(
                       destination: d,
                       s: s,
+                      compact: compact,
                       selected:
                           currentPath == d.path ||
                           currentPath.startsWith('${d.path}/'),
@@ -266,115 +261,56 @@ class Sidebar extends ConsumerWidget {
                       onTap: () => onNavigate(d.path),
                     ),
                 ],
-                const SizedBox(height: AppSpace.md),
+                const SizedBox(height: AppSpace.space6),
               ],
             ),
           ),
           Container(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpace.lg,
-              AppSpace.md,
-              AppSpace.lg,
-              AppSpace.md,
+            padding: EdgeInsets.fromLTRB(
+              compact ? AppSpace.space2 : AppSpace.space4,
+              AppSpace.space3,
+              compact ? AppSpace.space2 : AppSpace.space4,
+              AppSpace.space4,
             ),
             decoration: BoxDecoration(
               border: Border(
-                top: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+                top: BorderSide(
+                  color: AppColors.sidebarText.withValues(alpha: 0.12),
+                ),
               ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const _LiveDot(),
-                    const SizedBox(width: 6),
-                    Text(
-                      s.tr('Connected', 'متصل'),
-                      style: const TextStyle(
-                        color: AppColors.onSidebar,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
+            child: compact
+                ? Center(
+                    child: LtrText(
+                      'v1.0',
+                      style: AppTypography.metadata.copyWith(
+                        color: AppColors.sidebarMuted,
                       ),
                     ),
-                    const Spacer(),
-                    const Directionality(
-                      textDirection: TextDirection.ltr,
-                      child: Text(
-                        'T2 · CAI',
-                        style: TextStyle(
-                          color: AppColors.onSidebarMuted,
-                          fontSize: 9,
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        s.tr(
+                          'Fixture repository · no live feed',
+                          'مستودع بيانات ثابت · لا يوجد بث مباشر',
+                        ),
+                        style: AppTypography.metadata.copyWith(
+                          color: AppColors.sidebarMuted,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  s.tr(
-                    'Frontend demo · fixture repository · no live feed',
-                    'واجهة تجريبية · مستودع بيانات ثابت · لا يوجد بث مباشر',
-                  ),
-                  style: const TextStyle(
-                    color: AppColors.onSidebarMuted,
-                    fontSize: 8.5,
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                const Directionality(
-                  textDirection: TextDirection.ltr,
-                  child: Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    child: Text(
-                      'v1.0.0 · build 2026.11',
-                      style: TextStyle(
-                        color: AppColors.onSidebarMuted,
-                        fontSize: 8.5,
+                      const SizedBox(height: AppSpace.space1),
+                      LtrText(
+                        'v1.0.0 · CAI · T2',
+                        style: AppTypography.metadata.copyWith(
+                          color: AppColors.sidebarMuted,
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                ),
-              ],
-            ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _LiveDot extends StatefulWidget {
-  const _LiveDot();
-  @override
-  State<_LiveDot> createState() => _LiveDotState();
-}
-
-class _LiveDotState extends State<_LiveDot>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1400),
-  )..repeat(reverse: true);
-
-  @override
-  void dispose() {
-    _c.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: Tween<double>(begin: 0.35, end: 1).animate(_c),
-      child: Container(
-        width: 7,
-        height: 7,
-        decoration: const BoxDecoration(
-          color: AppColors.success,
-          shape: BoxShape.circle,
-        ),
       ),
     );
   }
@@ -384,6 +320,7 @@ class _SidebarItem extends StatelessWidget {
   final NavDestination destination;
   final AppStrings s;
   final bool selected;
+  final bool compact;
   final int? badge;
   final VoidCallback onTap;
 
@@ -392,88 +329,82 @@ class _SidebarItem extends StatelessWidget {
     required this.s,
     required this.selected,
     required this.onTap,
+    required this.compact,
     this.badge,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 2),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppRadius.control),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 140),
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 9),
+    final label = destination.label(s);
+    final content = AnimatedContainer(
+      duration: AppMotion.effective(context, AppMotion.hover),
+      curve: AppMotion.easeOut,
+      constraints: const BoxConstraints(minHeight: 42),
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? AppSpace.space3 : AppSpace.space3,
+        vertical: AppSpace.space2,
+      ),
+      decoration: BoxDecoration(
+        color: selected ? AppColors.sidebarSelected : Colors.transparent,
+        borderRadius: BorderRadius.circular(AppRadius.control),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 3,
+            height: 18,
             decoration: BoxDecoration(
-              color: selected
-                  ? Colors.white.withValues(alpha: 0.10)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(AppRadius.control),
-              border: Border.all(
-                color: selected
-                    ? AppColors.primary.withValues(alpha: 0.28)
-                    : Colors.transparent,
+              color: selected ? AppColors.primary : Colors.transparent,
+              borderRadius: BorderRadius.circular(AppRadius.small),
+            ),
+          ),
+          SizedBox(width: compact ? AppSpace.space2 : AppSpace.space3),
+          Icon(
+            destination.icon,
+            size: 19,
+            color: selected
+                ? AppColors.sidebarText
+                : AppColors.sidebarMuted,
+          ),
+          if (!compact) ...[
+            const SizedBox(width: AppSpace.space3),
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.label.copyWith(
+                  color: selected
+                      ? AppColors.sidebarText
+                      : AppColors.onSidebar,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                ),
               ),
             ),
-            child: Row(
-              children: [
-                Container(
-                  width: 3,
-                  height: 16,
-                  decoration: BoxDecoration(
-                    color: selected ? AppColors.primary : Colors.transparent,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+            if (badge != null && badge! > 0)
+              LtrText(
+                '$badge',
+                style: AppTypography.metadata.copyWith(
+                  color: AppColors.sidebarMuted,
                 ),
-                const SizedBox(width: 7),
-                Icon(
-                  destination.icon,
-                  size: 17,
-                  color: selected
-                      ? AppColors.primary
-                      : AppColors.onSidebarMuted,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    destination.label(s),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: selected ? Colors.white : AppColors.onSidebar,
-                      fontSize: 11.5,
-                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                    ),
-                  ),
-                ),
-                if (badge != null && badge! > 0)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 5,
-                      vertical: 1,
-                    ),
-                    decoration: BoxDecoration(
-                      color: selected
-                          ? AppColors.primary.withValues(alpha: 0.22)
-                          : Colors.white.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                    ),
-                    child: Text(
-                      '$badge',
-                      style: TextStyle(
-                        color: selected
-                            ? AppColors.primary
-                            : AppColors.onSidebarMuted,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+              ),
+          ],
+        ],
+      ),
+    );
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpace.space1),
+      child: Material(
+        color: Colors.transparent,
+        child: Tooltip(
+          message: compact ? label : '',
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(AppRadius.control),
+            hoverColor: AppColors.sidebarHover,
+            focusColor: AppColors.sidebarHover,
+            child: Semantics(button: true, label: label, child: content),
           ),
         ),
       ),
@@ -510,87 +441,85 @@ class TopBar extends ConsumerWidget {
       }
     }
 
-    return LayoutBuilder(
-      builder: (context, c) {
-        final narrow = c.maxWidth < 720;
-        return Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: narrow ? AppSpace.md : AppSpace.xl,
-            vertical: AppSpace.sm,
-          ),
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            border: Border(bottom: BorderSide(color: AppColors.border)),
-          ),
-          child: Row(
-            children: [
-              if (showMenu) ...[
-                IconButton(
-                  tooltip: s.tr('Open navigation', 'فتح القائمة'),
-                  onPressed: () => Scaffold.of(context).openDrawer(),
-                  icon: const Icon(Icons.menu, size: 20),
-                  visualDensity: VisualDensity.compact,
-                ),
-                const SizedBox(width: 4),
-              ],
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (!narrow)
-                      Text(
-                        group == null
-                            ? s.tr('Command Center', 'مركز القيادة')
-                            : groupLabel(group, s),
-                        style: const TextStyle(
-                          fontSize: 9.5,
-                          color: AppColors.muted,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+    final narrow = MediaQuery.sizeOf(context).width < AppBreakpoints.mobile;
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 64),
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: narrow ? AppSpace.space4 : AppSpace.space6,
+          vertical: AppSpace.space2,
+        ),
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          border: Border(bottom: BorderSide(color: AppColors.divider)),
+        ),
+        child: Row(
+          children: [
+            if (showMenu) ...[
+              IconButton(
+                tooltip: s.tr('Open navigation', 'فتح القائمة'),
+                onPressed: () => Scaffold.of(context).openDrawer(),
+                icon: const Icon(Icons.menu, size: 20),
+              ),
+              const SizedBox(width: AppSpace.space1),
+            ],
+            Expanded(
+              child: Row(
+                children: [
+                  if (!narrow && group != null) ...[
                     Text(
+                      groupLabel(group, s),
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.metadata.copyWith(
+                        color: AppColors.textTertiary,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpace.space2),
+                    const Icon(
+                      Icons.chevron_left,
+                      size: 14,
+                      color: AppColors.textDisabled,
+                    ),
+                    const SizedBox(width: AppSpace.space2),
+                  ],
+                  Flexible(
+                    child: Text(
                       title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: narrow ? 14 : 17,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.navy,
+                      style: AppTypography.bodyEmphasis.copyWith(
+                        color: AppColors.textPrimary,
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              const SizedBox(width: AppSpace.sm),
-              if (!narrow) const _ClockChip(),
-              if (!narrow) const SizedBox(width: AppSpace.sm),
-              if (!narrow)
-                StatusPill(
-                  label: s.tr('Connected', 'متصل'),
-                  color: AppColors.success,
-                  icon: Icons.wifi_tethering,
-                  compact: true,
-                ),
-              if (!narrow) const SizedBox(width: AppSpace.sm),
-              _RoleMenu(s: s, compact: narrow),
-              const SizedBox(width: AppSpace.sm),
-              _LanguageToggle(s: s),
-              const SizedBox(width: 2),
-              IconButton(
-                tooltip: s.tr('Sign out', 'تسجيل الخروج'),
-                onPressed: () {
-                  ref.read(sessionProvider.notifier).logout();
-                  context.go(Routes.login);
-                },
-                icon: const Icon(Icons.logout, size: 18),
-                visualDensity: VisualDensity.compact,
-                color: AppColors.muted,
+            ),
+            const SizedBox(width: AppSpace.space3),
+            if (!narrow) const _ClockChip(),
+            if (!narrow) const SizedBox(width: AppSpace.space2),
+            if (!narrow)
+              StatusPill(
+                label: s.tr('Fixture data', 'بيانات ثابتة'),
+                color: AppColors.primary,
+                compact: true,
               ),
-            ],
-          ),
-        );
-      },
+            if (!narrow) const SizedBox(width: AppSpace.space2),
+            _RoleMenu(s: s, compact: narrow),
+            const SizedBox(width: AppSpace.space2),
+            _LanguageToggle(s: s),
+            const SizedBox(width: AppSpace.space1),
+            IconButton(
+              tooltip: s.tr('Sign out', 'تسجيل الخروج'),
+              onPressed: () {
+                ref.read(sessionProvider.notifier).logout();
+                context.go(Routes.login);
+              },
+              icon: const Icon(Icons.logout, size: 18),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -602,35 +531,34 @@ class _ClockChip extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final now = ref.watch(demoClockProvider).value ?? Fixtures.reference;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppColors.soft,
-        borderRadius: BorderRadius.circular(AppRadius.chip),
-        border: Border.all(color: AppColors.border),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpace.space3,
+        vertical: AppSpace.space2,
       ),
-      child: Directionality(
-        textDirection: TextDirection.ltr,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.schedule, size: 12, color: AppColors.muted),
-            const SizedBox(width: 4),
-            Text(
-              '${cairoDate(now)} · ${cairoClock(now)}',
-              style: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: AppColors.navy,
-                fontFeatures: [FontFeature.tabularFigures()],
-              ),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceSoft,
+        borderRadius: BorderRadius.circular(AppRadius.chip),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.schedule, size: 14, color: AppColors.textTertiary),
+          const SizedBox(width: AppSpace.space1),
+          LtrText(
+            '${cairoDate(now)} · ${cairoClock(now)}',
+            style: AppTypography.metadata.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w600,
             ),
-            const SizedBox(width: 5),
-            const Text(
-              'UTC+2',
-              style: TextStyle(fontSize: 8, color: AppColors.muted),
+          ),
+          const SizedBox(width: AppSpace.space2),
+          LtrText(
+            'UTC+2',
+            style: AppTypography.metadata.copyWith(
+              color: AppColors.textTertiary,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -666,10 +594,9 @@ class _RoleMenu extends ConsumerWidget {
           enabled: false,
           child: Text(
             s.tr('Switch demo role', 'تغيير الدور التجريبي'),
-            style: const TextStyle(
-              fontSize: 10,
-              color: AppColors.muted,
-              fontWeight: FontWeight.w700,
+            style: AppTypography.metadata.copyWith(
+              color: AppColors.textTertiary,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ),
@@ -682,11 +609,13 @@ class _RoleMenu extends ConsumerWidget {
                   user.role == r
                       ? Icons.radio_button_checked
                       : Icons.radio_button_off,
-                  size: 14,
-                  color: user.role == r ? AppColors.action : AppColors.muted,
+                  size: 16,
+                  color: user.role == r
+                      ? AppColors.primaryStrong
+                      : AppColors.textSecondary,
                 ),
-                const SizedBox(width: 8),
-                Text(r.label(s), style: const TextStyle(fontSize: 12)),
+                const SizedBox(width: AppSpace.space2),
+                Text(r.label(s), style: AppTypography.tableText),
               ],
             ),
           ),
@@ -696,66 +625,69 @@ class _RoleMenu extends ConsumerWidget {
             value: 'lang',
             child: Text(
               s.arabic ? 'English' : 'العربية',
-              style: const TextStyle(fontSize: 12),
+              style: AppTypography.tableText,
             ),
           ),
           PopupMenuItem<Object>(
             value: 'logout',
             child: Text(
               s.tr('Sign out', 'تسجيل الخروج'),
-              style: const TextStyle(fontSize: 12),
+              style: AppTypography.tableText,
             ),
           ),
         ],
       ],
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: compact ? 4 : 7, vertical: 4),
+        padding: EdgeInsets.symmetric(
+          horizontal: compact ? AppSpace.space2 : AppSpace.space3,
+          vertical: AppSpace.space1,
+        ),
         decoration: BoxDecoration(
-          color: AppColors.soft,
+          color: AppColors.surfaceSoft,
           borderRadius: BorderRadius.circular(AppRadius.chip),
-          border: Border.all(color: AppColors.border),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             CircleAvatar(
-              radius: 12,
-              backgroundColor: AppColors.action.withValues(alpha: 0.12),
+              radius: 13,
+              backgroundColor: AppColors.primarySoft,
               child: Text(
                 user.nameEn.split(' ').map((e) => e[0]).take(2).join(),
-                style: const TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.action,
+                style: AppTypography.label.copyWith(
+                  color: AppColors.primaryStrong,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
             if (!compact) ...[
-              const SizedBox(width: 6),
+              const SizedBox(width: AppSpace.space2),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     s.arabic ? user.nameAr : user.nameEn,
-                    style: const TextStyle(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.navy,
+                    style: AppTypography.metadata.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   Text(
                     user.role.label(s),
-                    style: const TextStyle(
-                      fontSize: 8.5,
-                      color: AppColors.muted,
+                    style: AppTypography.metadata.copyWith(
+                      color: AppColors.textTertiary,
                     ),
                   ),
                 ],
               ),
             ],
-            const SizedBox(width: 2),
-            const Icon(Icons.expand_more, size: 14, color: AppColors.muted),
+            const SizedBox(width: AppSpace.space1),
+            const Icon(
+              Icons.expand_more,
+              size: 14,
+              color: AppColors.textSecondary,
+            ),
           ],
         ),
       ),
@@ -772,20 +704,23 @@ class _LanguageToggle extends ConsumerWidget {
     Widget item(String label, bool active, bool arabic) {
       return InkWell(
         onTap: () => ref.read(sessionProvider.notifier).setArabic(arabic),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 140),
-          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+          duration: AppMotion.effective(context, AppMotion.selection),
+          curve: AppMotion.easeOut,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpace.space3,
+            vertical: AppSpace.space2,
+          ),
           decoration: BoxDecoration(
-            color: active ? AppColors.action : Colors.transparent,
-            borderRadius: BorderRadius.circular(6),
+            color: active ? AppColors.primaryStrong : Colors.transparent,
+            borderRadius: BorderRadius.circular(AppRadius.chip),
           ),
           child: Text(
             label,
-            style: TextStyle(
-              fontSize: 9.5,
-              fontWeight: FontWeight.w700,
-              color: active ? Colors.white : AppColors.muted,
+            style: AppTypography.label.copyWith(
+              color: active ? AppColors.textOnDark : AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ),
@@ -793,11 +728,10 @@ class _LanguageToggle extends ConsumerWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.all(2),
+      padding: const EdgeInsets.all(AppSpace.space1),
       decoration: BoxDecoration(
-        color: AppColors.soft,
+        color: AppColors.surfaceSoft,
         borderRadius: BorderRadius.circular(AppRadius.chip),
-        border: Border.all(color: AppColors.border),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

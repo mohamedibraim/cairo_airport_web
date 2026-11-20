@@ -27,8 +27,8 @@ class AppTableRow {
   });
 }
 
-/// A compact, theme-consistent data table with an optional minimum width so it
-/// scrolls horizontally on mobile browsers instead of clipping values.
+/// Operational data table: 44px header, 52px+ rows, dividers only, horizontal
+/// scrolling on narrow screens and no vertical gridlines.
 class AppTable extends StatelessWidget {
   final List<AppTableColumn> columns;
   final List<AppTableRow> rows;
@@ -41,18 +41,20 @@ class AppTable extends StatelessWidget {
     required this.rows,
     this.minWidth = 720,
     this.emptyMessage,
-    this.padding = const EdgeInsets.symmetric(vertical: 4),
+    this.padding = const EdgeInsets.symmetric(vertical: AppSpace.space1),
   });
 
   @override
   Widget build(BuildContext context) {
     if (rows.isEmpty) {
       return Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpace.xl),
+        padding: const EdgeInsets.symmetric(vertical: AppSpace.space6),
         child: Center(
           child: Text(
             emptyMessage ?? '—',
-            style: const TextStyle(fontSize: 12, color: AppColors.muted),
+            style: AppTypography.metadata.copyWith(
+              color: AppColors.textTertiary,
+            ),
           ),
         ),
       );
@@ -67,35 +69,10 @@ class AppTable extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: AppSpace.sm,
-                    horizontal: AppSpace.sm,
-                  ),
-                  child: Row(
-                    children: [
-                      for (final col in columns)
-                        Expanded(
-                          flex: col.flex,
-                          child: Align(
-                            alignment: col.alignment,
-                            child: Text(
-                              col.label,
-                              style: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.muted,
-                                letterSpacing: 0.2,
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
+                _header(),
                 const Divider(height: 1, color: AppColors.divider),
                 for (var i = 0; i < rows.length; i++) ...[
-                  _row(context, rows[i], i),
+                  _row(context, rows[i]),
                   if (i != rows.length - 1)
                     const Divider(height: 1, color: AppColors.divider),
                 ],
@@ -107,39 +84,84 @@ class AppTable extends StatelessWidget {
     );
   }
 
-  Widget _row(BuildContext context, AppTableRow row, int index) {
-    final content = Padding(
-      padding: const EdgeInsets.symmetric(
-        vertical: AppSpace.md,
-        horizontal: AppSpace.sm,
-      ),
+  Widget _header() {
+    return Container(
+      height: 44,
+      color: AppColors.surfaceSoft,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpace.space4),
       child: Row(
         children: [
-          for (var i = 0; i < columns.length; i++)
+          for (final col in columns)
             Expanded(
-              flex: columns[i].flex,
+              flex: col.flex,
               child: Align(
-                alignment: columns[i].alignment,
-                child: i < row.cells.length
-                    ? row.cells[i]
-                    : const SizedBox.shrink(),
+                alignment: col.alignment,
+                child: Text(
+                  col.label,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.label.copyWith(
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ),
         ],
       ),
     );
-    final decorated = DecoratedBox(
-      decoration: BoxDecoration(
-        color: row.selected
-            ? AppColors.tealSoft
-            : (row.emphasized ? AppColors.soft : Colors.transparent),
-      ),
-      child: content,
+  }
+
+  Widget _row(BuildContext context, AppTableRow row) {
+    final background = row.selected
+        ? AppColors.surfaceSelected
+        : (row.emphasized ? AppColors.surfaceSoft : AppColors.surface);
+    final resolvedPadding = padding.resolve(Directionality.of(context));
+    final decorated = Stack(
+      children: [
+        Positioned.fill(
+          child: DecoratedBox(decoration: BoxDecoration(color: background)),
+        ),
+        if (row.selected)
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: Container(width: 3, color: AppColors.primaryStrong),
+          ),
+        ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 52),
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: AppSpace.space4,
+              right: AppSpace.space4,
+              top: resolvedPadding.top,
+              bottom: resolvedPadding.bottom,
+            ),
+            child: Row(
+              children: [
+                for (var i = 0; i < columns.length; i++)
+                  Expanded(
+                    flex: columns[i].flex,
+                    child: Align(
+                      alignment: columns[i].alignment,
+                      child: i < row.cells.length
+                          ? row.cells[i]
+                          : const SizedBox.shrink(),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
     if (row.onTap == null) return decorated;
     return Material(
       color: Colors.transparent,
-      child: InkWell(onTap: row.onTap, child: decorated),
+      child: InkWell(
+        onTap: row.onTap,
+        hoverColor: AppColors.surfaceHover,
+        focusColor: AppColors.primarySoft,
+        child: decorated,
+      ),
     );
   }
 }
@@ -151,14 +173,10 @@ class TableCaption extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: AppSpace.sm),
+      padding: const EdgeInsets.only(top: AppSpace.space2),
       child: Text(
         text,
-        style: const TextStyle(
-          fontSize: 10,
-          color: AppColors.muted,
-          height: 1.4,
-        ),
+        style: AppTypography.metadata.copyWith(color: AppColors.textTertiary),
       ),
     );
   }

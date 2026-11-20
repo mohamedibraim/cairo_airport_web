@@ -122,7 +122,7 @@ extension SeverityX on Severity {
     Severity.low => AppColors.success,
     Severity.medium => AppColors.warning,
     Severity.high => AppColors.danger,
-    Severity.critical => const Color(0xFFB42318),
+    Severity.critical => AppColors.error,
   };
 }
 

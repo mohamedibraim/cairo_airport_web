@@ -33,10 +33,11 @@ class LayerSelector extends StatelessWidget {
               color: active.contains(layer) ? Colors.white : AppColors.muted,
             ),
             label: Text(layer.label(s)),
-            labelStyle: TextStyle(
-              fontSize: dense ? 9.5 : 10.5,
-              fontWeight: FontWeight.w700,
-              color: active.contains(layer) ? Colors.white : AppColors.text,
+            labelStyle: AppTypography.label.copyWith(
+              color: active.contains(layer)
+                  ? AppColors.textOnDark
+                  : AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
             ),
             backgroundColor: AppColors.surface,
             selectedColor: AppColors.action,

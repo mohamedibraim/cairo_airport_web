@@ -11,7 +11,7 @@ class ChartSeries {
   const ChartSeries({
     required this.label,
     required this.points,
-    this.color = AppColors.action,
+    this.color = AppColors.primaryStrong,
     this.dashed = false,
     this.band = false,
   });
@@ -54,10 +54,8 @@ class SeriesChart extends StatelessWidget {
                     const SizedBox(width: 5),
                     Text(
                       s.label,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.muted,
+                      style: AppTypography.metadata.copyWith(
+                        color: AppColors.textSecondary,
                       ),
                     ),
                   ],
@@ -69,10 +67,12 @@ class SeriesChart extends StatelessWidget {
         SizedBox(
           height: height,
           child: visible.isEmpty
-              ? const Center(
+              ? Center(
                   child: Text(
                     'No series in this range',
-                    style: TextStyle(fontSize: 11, color: AppColors.muted),
+                    style: AppTypography.metadata.copyWith(
+                      color: AppColors.textTertiary,
+                    ),
                   ),
                 )
               : CustomPaint(
@@ -84,7 +84,9 @@ class SeriesChart extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             xAxisNote!,
-            style: const TextStyle(fontSize: 10, color: AppColors.muted),
+            style: AppTypography.metadata.copyWith(
+              color: AppColors.textTertiary,
+            ),
           ),
         ],
       ],
@@ -151,10 +153,10 @@ class _SeriesPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    const left = 38.0;
-    const right = 10.0;
-    const top = 10.0;
-    const bottom = 24.0;
+    const left = 46.0;
+    const right = AppSpace.space3;
+    const top = AppSpace.space3;
+    const bottom = 28.0;
     final plot = Rect.fromLTWH(
       left,
       top,
@@ -177,7 +179,7 @@ class _SeriesPainter extends CustomPainter {
 
     // horizontal grid + y labels
     final gridPaint = Paint()
-      ..color = AppColors.border
+      ..color = AppColors.divider
       ..strokeWidth = 1;
     for (var i = 0; i <= 4; i++) {
       final y = plot.bottom - plot.height * i / 4;
@@ -188,8 +190,8 @@ class _SeriesPainter extends CustomPainter {
         _compact(value),
         Offset(plot.left - 6, y),
         align: TextAlign.right,
-        color: AppColors.muted,
-        size: 9,
+        color: AppColors.textTertiary,
+        size: 12,
         anchorRight: true,
         centerVertically: true,
       );
@@ -211,8 +213,8 @@ class _SeriesPainter extends CustomPainter {
         _hourLabel(sortedX[i]),
         Offset(x, plot.bottom + 8),
         align: TextAlign.center,
-        color: AppColors.muted,
-        size: 9,
+        color: AppColors.textTertiary,
+        size: 12,
         centerHorizontally: true,
       );
     }
@@ -264,7 +266,13 @@ class _SeriesPainter extends CustomPainter {
     }
 
     if (yUnit.isNotEmpty) {
-      _text(canvas, yUnit, const Offset(0, 0), color: AppColors.muted, size: 9);
+      _text(
+        canvas,
+        yUnit,
+        const Offset(0, 0),
+        color: AppColors.textTertiary,
+        size: 12,
+      );
     }
   }
 
@@ -303,7 +311,7 @@ class _SeriesPainter extends CustomPainter {
     String text,
     Offset at, {
     Color color = AppColors.text,
-    double size = 10,
+    double size = 12,
     TextAlign align = TextAlign.left,
     bool anchorRight = false,
     bool centerHorizontally = false,
@@ -368,15 +376,15 @@ class HBarChart extends StatelessWidget {
   const HBarChart({
     super.key,
     required this.data,
-    this.color = AppColors.primary,
+    this.color = AppColors.primaryStrong,
   });
 
   @override
   Widget build(BuildContext context) {
     if (data.isEmpty) {
-      return const Text(
+      return Text(
         '—',
-        style: TextStyle(fontSize: 11, color: AppColors.muted),
+        style: AppTypography.metadata.copyWith(color: AppColors.textTertiary),
       );
     }
     final max = data.map((d) => d.$2).fold<double>(0, (a, b) => b > a ? b : a);
@@ -394,15 +402,14 @@ class HBarChart extends StatelessWidget {
                     d.$1,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      color: AppColors.muted,
+                    style: AppTypography.metadata.copyWith(
+                      color: AppColors.textTertiary,
                     ),
                   ),
                 ),
                 Expanded(
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(AppRadius.small),
                     child: Stack(
                       children: [
                         Container(height: 8, color: AppColors.neutralSoft),
@@ -425,10 +432,11 @@ class HBarChart extends StatelessWidget {
                     child: Text(
                       d.$3,
                       textAlign: TextAlign.end,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.text,
+                      style: AppTypography.label.copyWith(
+                        fontFamily: 'Inter',
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),

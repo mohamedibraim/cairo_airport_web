@@ -36,7 +36,9 @@ class EventTimeline extends StatelessWidget {
                 'لا توجد أحداث مسجلة لهذا العنصر بعد.',
               ),
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 11, color: AppColors.muted),
+              style: AppTypography.metadata.copyWith(
+                color: AppColors.textTertiary,
+              ),
             ),
           ],
         ),
@@ -88,11 +90,11 @@ class _EventRow extends StatelessWidget {
                 textDirection: TextDirection.ltr,
                 child: Text(
                   _time(event.observedAt),
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.muted,
-                    fontFeatures: [FontFeature.tabularFigures()],
+                  style: AppTypography.metadata.copyWith(
+                    fontFamily: 'Inter',
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                    color: AppColors.textTertiary,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -107,12 +109,6 @@ class _EventRow extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: color,
                   shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: color.withValues(alpha: 0.25),
-                      blurRadius: 4,
-                    ),
-                  ],
                 ),
               ),
               if (!last)
@@ -134,11 +130,9 @@ class _EventRow extends StatelessWidget {
                 children: [
                   Text(
                     s.arabic ? event.summaryAr : event.summaryEn,
-                    style: TextStyle(
-                      fontSize: dense ? 11 : 12,
+                    style: AppTypography.tableText.copyWith(
+                      color: AppColors.textPrimary,
                       fontWeight: FontWeight.w600,
-                      height: 1.4,
-                      color: AppColors.text,
                     ),
                   ),
                   const SizedBox(height: 3),
@@ -149,16 +143,14 @@ class _EventRow extends StatelessWidget {
                     children: [
                       IdText(
                         event.eventId,
-                        style: const TextStyle(
-                          fontSize: 9,
-                          color: AppColors.muted,
+                        style: AppTypography.metadata.copyWith(
+                          color: AppColors.textTertiary,
                         ),
                       ),
                       Text(
                         event.type,
-                        style: const TextStyle(
-                          fontSize: 9,
-                          color: AppColors.muted,
+                        style: AppTypography.metadata.copyWith(
+                          color: AppColors.textTertiary,
                         ),
                       ),
                       StatusPill(
@@ -184,9 +176,8 @@ class _EventRow extends StatelessWidget {
                       padding: const EdgeInsets.only(top: 3),
                       child: Text(
                         s.arabic ? (event.outcomeAr ?? '') : event.outcomeEn!,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: AppColors.action,
+                        style: AppTypography.metadata.copyWith(
+                          color: AppColors.primaryStrong,
                         ),
                       ),
                     ),
@@ -248,16 +239,17 @@ class ActivityItem extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    fontSize: 11.5,
+                  style: AppTypography.tableText.copyWith(
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w600,
-                    height: 1.35,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   meta,
-                  style: const TextStyle(fontSize: 10, color: AppColors.muted),
+                  style: AppTypography.metadata.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
                 ),
               ],
             ),
@@ -268,10 +260,10 @@ class ActivityItem extends StatelessWidget {
               textDirection: TextDirection.ltr,
               child: Text(
                 trailing!,
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.muted,
+                style: AppTypography.label.copyWith(
+                  fontFamily: 'Inter',
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                  color: AppColors.textSecondary,
                 ),
               ),
             ),

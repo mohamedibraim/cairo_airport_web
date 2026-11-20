@@ -137,10 +137,9 @@ class TwinSchematic extends StatelessWidget {
                             name,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: compact ? 10 : 11,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.navy,
+                            style: AppTypography.metadata.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
@@ -149,9 +148,8 @@ class TwinSchematic extends StatelessWidget {
                     const Spacer(),
                     IdText(
                       e.id,
-                      style: const TextStyle(
-                        fontSize: 9,
-                        color: AppColors.muted,
+                      style: AppTypography.metadata.copyWith(
+                        color: AppColors.textTertiary,
                       ),
                     ),
                   ],
@@ -181,16 +179,8 @@ class TwinSchematic extends StatelessWidget {
               duration: const Duration(milliseconds: 160),
               decoration: BoxDecoration(
                 color: selected ? color : AppColors.surface,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: color, width: selected ? 2 : 1.4),
-                boxShadow: selected
-                    ? [
-                        BoxShadow(
-                          color: color.withValues(alpha: 0.3),
-                          blurRadius: 8,
-                        ),
-                      ]
-                    : null,
+                borderRadius: BorderRadius.circular(AppRadius.control),
+                border: Border.all(color: color, width: selected ? 2 : 1),
               ),
               child: Icon(
                 e.layer == TwinLayer.baggage
@@ -242,10 +232,8 @@ class TwinSchematic extends StatelessWidget {
                   const SizedBox(width: 4),
                   Text(
                     st.label(s),
-                    style: const TextStyle(
-                      fontSize: 9,
-                      color: AppColors.muted,
-                      fontWeight: FontWeight.w600,
+                    style: AppTypography.metadata.copyWith(
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -261,7 +249,7 @@ class _GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final p = Paint()
-      ..color = AppColors.border.withValues(alpha: 0.35)
+      ..color = AppColors.divider.withValues(alpha: 0.55)
       ..strokeWidth = 1;
     const step = 40.0;
     for (double x = 0; x < size.width; x += step) {

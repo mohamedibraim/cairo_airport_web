@@ -4,12 +4,16 @@ import '../l10n/strings.dart';
 import '../theme/tokens.dart';
 import 'badges.dart';
 
+/// Standard surface. Elevation 1, 14px radius, 20px padding and no default
+/// border. Provide [color] only for a real semantic surface, never decoration.
 class AppCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
   final VoidCallback? onTap;
   final Color? color;
   final bool flat;
+  final bool selected;
+
   const AppCard({
     super.key,
     required this.child,
@@ -17,17 +21,21 @@ class AppCard extends StatelessWidget {
     this.onTap,
     this.color,
     this.flat = false,
+    this.selected = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final content = Container(
-      padding: padding ?? const EdgeInsets.all(AppSpace.lg),
+    final background = color ??
+        (selected ? AppColors.surfaceSelected : AppColors.surface);
+    final content = AnimatedContainer(
+      duration: AppMotion.effective(context, AppMotion.selection),
+      curve: AppMotion.easeOut,
+      padding: padding ?? const EdgeInsets.all(AppSpace.space5),
       decoration: BoxDecoration(
-        color: color ?? AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.major),
-        border: Border.all(color: AppColors.border),
-        boxShadow: flat ? null : const [AppShadow.card],
+        color: background,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        boxShadow: flat ? AppShadows.none : AppShadows.level1,
       ),
       child: child,
     );
@@ -36,7 +44,10 @@ class AppCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.major),
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        hoverColor: selected ? AppColors.surfaceSelected : AppColors.surfaceHover,
+        focusColor: AppColors.primarySoft,
+        splashColor: AppColors.primarySoft,
         child: content,
       ),
     );
@@ -56,7 +67,6 @@ class SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).textTheme;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -64,15 +74,28 @@ class SectionHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: t.titleMedium),
+              Text(
+                title,
+                style: AppTypography.sectionTitle.copyWith(
+                  color: AppColors.textPrimary,
+                ),
+              ),
               if (subtitle != null) ...[
-                const SizedBox(height: 2),
-                Text(subtitle!, style: t.bodySmall),
+                const SizedBox(height: AppSpace.space2),
+                Text(
+                  subtitle!,
+                  style: AppTypography.metadata.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
               ],
             ],
           ),
         ),
-        ?trailing,
+        if (trailing != null) ...[
+          const SizedBox(width: AppSpace.space4),
+          trailing!,
+        ],
       ],
     );
   }
@@ -91,70 +114,91 @@ class KpiTileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).textTheme;
     final label = s.arabic ? kpi.labelAr : kpi.labelEn;
     final unit = s.arabic ? kpi.unitAr : kpi.unitEn;
     final ctx = s.arabic ? (kpi.contextAr ?? '') : (kpi.contextEn ?? '');
+
     return AppCard(
       onTap: onTap,
-      padding: const EdgeInsets.all(AppSpace.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Text(
-                  label,
-                  style: t.bodySmall?.copyWith(
-                    color: AppColors.muted,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Icon(
-                Icons.arrow_outward,
-                size: 14,
-                color: AppColors.muted.withValues(alpha: 0.7),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpace.sm),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              LtrText(
-                kpi.value,
-                style: t.headlineSmall?.copyWith(
-                  color: AppColors.navy,
-                  height: 1.0,
-                ),
-              ),
-              if (unit.isNotEmpty) ...[
-                const SizedBox(width: 6),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 2),
-                  child: Text(
-                    unit,
-                    style: t.bodySmall?.copyWith(fontWeight: FontWeight.w700),
-                  ),
-                ),
-              ],
-            ],
-          ),
-          if (ctx.isNotEmpty) ...[
-            const SizedBox(height: 4),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 120),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
             Text(
-              ctx,
+              label,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: t.bodySmall,
+              style: AppTypography.tableText.copyWith(
+                color: AppColors.textSecondary,
+              ),
             ),
+            const SizedBox(height: AppSpace.space4),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                LtrText(
+                  kpi.value,
+                  style: AppTypography.kpiValue.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (unit.isNotEmpty) ...[
+                  const SizedBox(width: AppSpace.metadataGap),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 3),
+                    child: Text(
+                      unit,
+                      style: AppTypography.metadata.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            if (ctx.isNotEmpty) ...[
+              const SizedBox(height: AppSpace.space2),
+              Text(
+                ctx,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.metadata.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+            const SizedBox(height: AppSpace.space3),
+            SourceBadge(meta: kpi.source, s: s),
           ],
-          const SizedBox(height: AppSpace.sm),
-          SourceBadge(meta: kpi.source, s: s),
-        ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Neutral, non-animated placeholder that preserves the final content height.
+class AppSkeleton extends StatelessWidget {
+  final double? width;
+  final double height;
+  final double radius;
+  const AppSkeleton({
+    super.key,
+    this.width,
+    this.height = 12,
+    this.radius = AppRadius.small,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: AppColors.neutralSoft,
+        borderRadius: BorderRadius.circular(radius),
       ),
     );
   }
@@ -177,22 +221,33 @@ class ViewStateMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).textTheme;
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 420),
         child: AppCard(
-          padding: const EdgeInsets.all(AppSpace.xl),
+          padding: const EdgeInsets.all(AppSpace.space6),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 34, color: AppColors.primary),
-              const SizedBox(height: AppSpace.md),
-              Text(title, style: t.titleMedium, textAlign: TextAlign.center),
-              const SizedBox(height: AppSpace.xs),
-              Text(message, style: t.bodySmall, textAlign: TextAlign.center),
+              Icon(icon, size: 32, color: AppColors.primaryStrong),
+              const SizedBox(height: AppSpace.space4),
+              Text(
+                title,
+                style: AppTypography.cardTitle.copyWith(
+                  color: AppColors.textPrimary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppSpace.space2),
+              Text(
+                message,
+                style: AppTypography.bodyPrimary.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+                textAlign: TextAlign.center,
+              ),
               if (actionLabel != null && onAction != null) ...[
-                const SizedBox(height: AppSpace.lg),
+                const SizedBox(height: AppSpace.space6),
                 FilledButton(onPressed: onAction, child: Text(actionLabel!)),
               ],
             ],
@@ -206,23 +261,28 @@ class ViewStateMessage extends StatelessWidget {
 class LoadingBlock extends StatelessWidget {
   final String? message;
   const LoadingBlock({super.key, this.message});
+
   @override
   Widget build(BuildContext context) {
-    return Center(
+    return Semantics(
+      label: message ?? 'Loading',
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(
-            width: 28,
-            height: 28,
-            child: CircularProgressIndicator(
-              strokeWidth: 2.5,
-              color: AppColors.action,
-            ),
-          ),
+          const AppSkeleton(width: 160, height: 14),
+          const SizedBox(height: AppSpace.space3),
+          const AppSkeleton(height: 12),
+          const SizedBox(height: AppSpace.space2),
+          const AppSkeleton(width: 220, height: 12),
           if (message != null) ...[
-            const SizedBox(height: AppSpace.md),
-            Text(message!, style: Theme.of(context).textTheme.bodySmall),
+            const SizedBox(height: AppSpace.space4),
+            Text(
+              message!,
+              style: AppTypography.metadata.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
           ],
         ],
       ),
@@ -234,22 +294,29 @@ class MetricRow extends StatelessWidget {
   final String label;
   final String value;
   const MetricRow({super.key, required this.label, required this.value});
+
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: AppSpace.space1),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            child: Text(label, style: Theme.of(context).textTheme.bodySmall),
+            child: Text(
+              label,
+              style: AppTypography.metadata.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpace.space3),
           Flexible(
             child: LtrText(
               value,
               textAlign: TextAlign.end,
-              style: Theme.of(context).textTheme.labelMedium,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.label.copyWith(color: AppColors.textPrimary),
             ),
           ),
         ],
@@ -282,7 +349,7 @@ class SimpleBarChart extends StatelessWidget {
           for (final d in data)
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 3),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpace.space1),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
@@ -294,19 +361,19 @@ class SimpleBarChart extends StatelessWidget {
                           widthFactor: 1,
                           child: Container(
                             decoration: BoxDecoration(
-                              color: color.withValues(alpha: 0.85),
-                              borderRadius: BorderRadius.circular(6),
+                              color: color,
+                              borderRadius: BorderRadius.circular(AppRadius.small),
                             ),
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: AppSpace.metadataGap),
                     LtrText(
                       d.$1,
-                      style: const TextStyle(
-                        fontSize: 9,
-                        color: AppColors.muted,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.metadata.copyWith(
+                        color: AppColors.textTertiary,
                       ),
                     ),
                   ],
